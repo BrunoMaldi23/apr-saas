@@ -1,5 +1,7 @@
 # APR SaaS — Gestión administrativa, tarifaria y lecturas en terreno
 
+> **Estado: MVP funcional**, no producto final.
+
 MVP funcional multi-tenant para Comités de Agua Potable Rural (APR/SSR) en Chile, alineado con la Ley 20.998 y el subsidio SAP. Incluye API NestJS + Prisma/PostgreSQL con RLS, backoffice Vue 3 y PWA offline-first para operadores.
 
 ## Stack y estructura
@@ -362,7 +364,7 @@ Si una instalación de npm bloquea scripts de dependencias nativas, permitir los
 
 - Se conservan API, Prisma, migraciones, RLS, contratos, autenticación, roles, reglas de facturación, IndexedDB, Service Worker, `clientUuid`, idempotencia y PDF oficial sin cambios de backend.
 - Los problemas detectados en backend no se modificaron en este rediseño: `promedioConsumo` usa `slice(-3)` sobre historial descendente, `/ciclos/activo` puede caer al último ciclo aunque esté cerrado, `lecturaAnterior` de `ruta-offline` no es estable y los pagos no son idempotentes. La PWA mitiga la visualización del promedio/consumo con estados comprensibles y no altera reglas de negocio.
-- No hay repositorio Git en el directorio de trabajo; los cambios quedan en el working tree y no hay commit/branch base que conservar.
+- El repositorio se reinició limpio: los `.env` reales están fuera del historial; solo se versionan `.env.example` y `.env.deploy.example` con valores de ejemplo.
 - `browser.screenshot` no estuvo disponible en el entorno de QA; se usaron snapshots de accesibilidad, `browser.evaluate` y Lighthouse en su lugar.
 - No se agregaron endpoints, funcionalidades de registro público, credenciales precargadas ni migraciones nuevas.
 #   a p r - s a a s  
