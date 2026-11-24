@@ -69,7 +69,7 @@ Rellenar:
 - `APP_DB_PASSWORD`
 - `JWT_SECRET`
 - `WEB_ADMIN_URL` y `PWA_URL` con las URLs reales de Vercel
-- `CLOUDFLARE_TUNNEL_TOKEN`
+- `CLOUDFLARE_TUNNEL_TOKEN` **solo** si usas túnel nombrado con dominio propio; en el MVP sin dominio no hace falta.
 
 Generar el SQL de roles con esos passwords:
 
@@ -84,13 +84,38 @@ Esto crea `deploy/generated/01-roles.sql`, que se monta solo en la primera inici
 
 ---
 
-## 4. Crear el túnel en Cloudflare
+## 4. Exponer la API con Cloudflare Tunnel
 
-En Cloudflare Zero Trust:
+### Opción elegida: sin dominio propio (Quick Tunnel)
 
-1. **Networks → Tunnels → Create a tunnel**
-2. Elegir entorno **Docker** y copiar el token.
-3. Pegar el token en `.env.deploy` como `CLOUDFLARE_TUNNEL_TOKEN`.
+`docker-compose.deploy.yml` ya viene habilitado:
+
+```yaml
+command: tunnel --no-autoupdate --url http://api:3000
+```
+
+Al levantar el contenedor, `cloudflared` imprime en sus logs una URL pública:
+
+```text
+https://xxxx-xxxx.trycloudflare.com
+```
+
+Usa esa URL como `${URL_PUBLICA_API}`.
+
+> La URL de Quick Tunnel cambia cada vez que el contenedor se reinicia. Cuando pase, actualiza `VITE_API_URL` en los dos proyectos de Vercel y vuelve a desplegarlos.
+
+### Opción estable: con dominio propio
+
+Si después quieres una URL fija, en Cloudflare Zero Trust:
+
+1. **Networks → Tunnels → Create a tunnel**, entorno **Docker**, copiar el token.
+2. Pegarlo en `.env.deploy` como `CLOUDFLARE_TUNNEL_TOKEN`.
+3. En `docker-compose.deploy.yml`, comentar la línea de `--url` y descomentar:
+
+```yaml
+command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+```
+
 4. Agregar **Public Hostname**, por ejemplo:
 
 ```text
@@ -154,8 +179,10 @@ Crear dos proyectos Vercel:
 Variable de entorno en **ambos**:
 
 ```text
-VITE_API_URL=https://api.tudominio.com/api/v1
+VITE_API_URL=https://<URL_PUBLICA_API>/api/v1
 ```
+
+Donde `<URL_PUBLICA_API>` es la URL `trycloudflare.com` que imprimió `cloudflared` (o tu hostname propio si usas túnel nombrado).
 
 Después de conocer las URLs finales, actualizar CORS en `.env.deploy`:
 
@@ -175,9 +202,9 @@ docker compose --env-file .env.deploy -f docker-compose.deploy.yml up -d api
 ## 8. Verificación final
 
 ```bash
-curl https://api.tudominio.com/api/v1/health
+curl https://<URL_PUBLICA_API>/api/v1/health
 
-curl -X POST https://api.tudominio.com/api/v1/auth/login \
+curl -X POST https://<URL_PUBLICA_API>/api/v1/auth/login \
   -H 'Content-Type: application/json' \
   -d '{"email":"admin@aprtegualda.cl","password":"Admin1234!"}'
 ```
@@ -208,7 +235,8 @@ Guardar el archivo fuera de la VM.
 
 | Síntoma | Acción |
 | --- | --- |
-| `502` del túnel | En Cloudflare, el Public Hostname debe apuntar a `HTTP api:3000`. |
+| `502` del túnel | En Quick Tunnel revisa los logs de `cloudflared`; en túnel nombrado el Public Hostname debe apuntar a `HTTP api:3000`. |
+| La URL `trycloudflare.com` dejó de funcionar | El contenedor se reinició y cambió la URL; actualiza `VITE_API_URL` en Vercel y redespliega. |
 | CORS bloqueado | Actualizar `WEB_ADMIN_URL`/`PWA_URL` y reiniciar `api`. |
 | Prisma engine arm64 | El build ocurre dentro de la VM ARM, así que Prisma genera el engine nativo; no copiar `node_modules` desde Windows. |
 | `P1000` | La API debe usar `APP_DATABASE_URL` con host `postgres`, no `localhost`. |

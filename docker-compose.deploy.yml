@@ -50,7 +50,11 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: apr-saas-tunnel
     restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    # MVP sin dominio propio: imprime una URL pública temporal https://xxxx.trycloudflare.com.
+    # La URL cambia en cada reinicio; si necesitas una estable, comenta esta línea y
+    # descomenta la del túnel nombrado con token + Public Hostname en Cloudflare.
+    command: tunnel --no-autoupdate --url http://api:3000
+    # command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
       - api
     networks:
