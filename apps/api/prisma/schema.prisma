@@ -1,0 +1,239 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Rol {
+  ADMIN
+  OPERADOR
+}
+
+enum EstadoCiclo {
+  ABIERTO
+  CERRADO
+}
+
+enum Incidencia {
+  NINGUNA
+  VUELTA_MEDIDOR
+  MEDIDOR_TRABADO
+  CASA_CERRADA
+  MEDIDOR_DANADO
+}
+
+enum EstadoCobro {
+  PENDIENTE
+  PARCIAL
+  PAGADO
+  VENCIDO
+}
+
+enum MedioPago {
+  EFECTIVO
+  TRANSFERENCIA
+  OTRO
+}
+
+model Comite {
+  id                       String             @id @default(uuid()) @db.Uuid
+  nombre                   String             @db.VarChar(180)
+  rut                      String?            @db.VarChar(20)
+  comuna                   String             @db.VarChar(100)
+  region                   String             @db.VarChar(100)
+  direccion                String?            @db.VarChar(240)
+  cargoFijoClp             Int
+  tarifaM3Clp              Int
+  topeSubsidioM3           Int                @default(15)
+  porcentajeSubsidioDefault Int                @default(50)
+  createdAt                DateTime           @default(now())
+  updatedAt                DateTime           @updatedAt
+
+  usuarios   Usuario[]
+  socios     Socio[]
+  medidores  Medidor[]
+  ciclos     CicloFacturacion[]
+  lecturas   Lectura[]
+  cobros     Cobro[]
+  pagos      Pago[]
+
+  @@map("comites")
+}
+
+model Usuario {
+  id           String   @id @default(uuid()) @db.Uuid
+  comiteId     String   @db.Uuid
+  rut          String   @db.VarChar(20)
+  nombre       String   @db.VarChar(160)
+  email        String   @unique @db.VarChar(160)
+  passwordHash String   @db.VarChar(255)
+  rol          Rol      @default(OPERADOR)
+  activo       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  comite Comite @relation(fields: [comiteId], references: [id], onDelete: Cascade)
+
+  @@unique([comiteId, rut])
+  @@index([comiteId])
+  @@map("usuarios")
+}
+
+model Socio {
+  id                  String   @id @default(uuid()) @db.Uuid
+  comiteId            String   @db.Uuid
+  rut                 String   @db.VarChar(20)
+  nombre              String   @db.VarChar(160)
+  direccion           String   @db.VarChar(240)
+  sector              String   @db.VarChar(120)
+  telefono            String?  @db.VarChar(30)
+  email               String?  @db.VarChar(160)
+  decretoSap          String?  @db.VarChar(60)
+  porcentajeSubsidio  Int      @default(0)
+  activo              Boolean  @default(true)
+  fechaIngreso        DateTime @default(now())
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  comite    Comite    @relation(fields: [comiteId], references: [id], onDelete: Cascade)
+  medidores Medidor[]
+  cobros    Cobro[]
+  pagos     Pago[]
+
+  @@unique([comiteId, rut])
+  @@index([comiteId, nombre])
+  @@index([comiteId, sector])
+  @@map("socios")
+}
+
+model Medidor {
+  id                String   @id @default(uuid()) @db.Uuid
+  comiteId          String   @db.Uuid
+  socioId           String   @db.Uuid
+  numero            String   @db.VarChar(30)
+  digitos           Int      @default(4)
+  lecturaInicial    Int
+  ordenRuta         Int
+  activo            Boolean  @default(true)
+  fechaInstalacion  DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  comite   Comite    @relation(fields: [comiteId], references: [id], onDelete: Cascade)
+  socio    Socio     @relation(fields: [socioId], references: [id], onDelete: Cascade)
+  lecturas Lectura[]
+  cobros   Cobro[]
+
+  @@unique([comiteId, numero])
+  @@unique([comiteId, ordenRuta])
+  @@index([comiteId, activo, ordenRuta])
+  @@map("medidores")
+}
+
+model CicloFacturacion {
+  id            String       @id @default(uuid()) @db.Uuid
+  comiteId      String       @db.Uuid
+  periodo       String       @db.VarChar(7)
+  fechaApertura DateTime     @default(now())
+  fechaCierre   DateTime?
+  estado        EstadoCiclo  @default(ABIERTO)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  comite   Comite    @relation(fields: [comiteId], references: [id], onDelete: Cascade)
+  lecturas Lectura[]
+  cobros   Cobro[]
+
+  @@unique([comiteId, periodo])
+  @@index([comiteId, estado])
+  @@map("ciclos_facturacion")
+}
+
+model Lectura {
+  id              String     @id @default(uuid()) @db.Uuid
+  comiteId        String     @db.Uuid
+  cicloId         String     @db.Uuid
+  medidorId       String     @db.Uuid
+  clientUuid      String     @db.VarChar(64)
+  lecturaAnterior Int
+  lecturaActual   Int
+  consumoM3       Int
+  incidencia      Incidencia @default(NINGUNA)
+  observacion     String?    @db.VarChar(500)
+  esEstimada      Boolean    @default(false)
+  alertaOperativa String?    @db.VarChar(240)
+  tomadaEn        DateTime
+  sincronizadaEn  DateTime   @default(now())
+  createdAt       DateTime   @default(now())
+
+  comite  Comite            @relation(fields: [comiteId], references: [id], onDelete: Cascade)
+  ciclo   CicloFacturacion  @relation(fields: [cicloId], references: [id], onDelete: Cascade)
+  medidor Medidor           @relation(fields: [medidorId], references: [id], onDelete: Cascade)
+
+  @@unique([comiteId, clientUuid])
+  @@unique([comiteId, cicloId, medidorId])
+  @@index([comiteId, medidorId, tomadaEn])
+  @@map("lecturas")
+}
+
+model Cobro {
+  id                  String       @id @default(uuid()) @db.Uuid
+  comiteId            String       @db.Uuid
+  cicloId             String       @db.Uuid
+  socioId             String       @db.Uuid
+  medidorId           String?      @db.Uuid
+  lecturaAnterior     Int
+  lecturaActual       Int
+  consumoM3           Int
+  cargoFijoClp        Int
+  consumoVariableClp  Int
+  subtotalClp         Int
+  m3Subsidiados       Int
+  baseSubsidiableClp  Int
+  porcentajeSubsidio  Int
+  descuentoSapClp     Int
+  saldoAnteriorClp    Int
+  totalAPagarClp      Int
+  saldoPendienteClp   Int
+  estado              EstadoCobro  @default(PENDIENTE)
+  decretoSap          String?      @db.VarChar(60)
+  fechaEmision        DateTime     @default(now())
+  fechaVencimiento    DateTime
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
+
+  comite   Comite           @relation(fields: [comiteId], references: [id], onDelete: Cascade)
+  ciclo    CicloFacturacion @relation(fields: [cicloId], references: [id], onDelete: Cascade)
+  socio    Socio            @relation(fields: [socioId], references: [id], onDelete: Cascade)
+  medidor  Medidor?         @relation(fields: [medidorId], references: [id], onDelete: SetNull)
+  pagos    Pago[]
+
+  @@unique([comiteId, cicloId, socioId])
+  @@index([comiteId, estado])
+  @@index([comiteId, cicloId])
+  @@map("cobros")
+}
+
+model Pago {
+  id                 String     @id @default(uuid()) @db.Uuid
+  comiteId           String     @db.Uuid
+  cobroId            String     @db.Uuid
+  socioId            String     @db.Uuid
+  montoClp           Int
+  medioPago          MedioPago
+  fechaPago          DateTime   @default(now())
+  referencia         String?    @db.VarChar(120)
+  comprobanteNumero  String     @db.VarChar(40)
+  createdAt          DateTime   @default(now())
+
+  comite Comite @relation(fields: [comiteId], references: [id], onDelete: Cascade)
+  cobro  Cobro  @relation(fields: [cobroId], references: [id], onDelete: Cascade)
+  socio  Socio  @relation(fields: [socioId], references: [id], onDelete: Cascade)
+
+  @@index([comiteId, fechaPago])
+  @@index([comiteId, cobroId])
+  @@map("pagos")
+}

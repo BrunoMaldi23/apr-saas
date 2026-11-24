@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="es-CL">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f4f8fc" />
+    <meta name="description" content="Administración de comités APR/SSR: padrón, ciclos, cobros y reportes." />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('apr-theme');
+          if (t !== 'light' && t !== 'dark' && t !== 'system') t = 'system';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {
+          document.documentElement.setAttribute('data-theme', 'system');
+        }
+      })();
+    </script>
+    <title>APR SaaS · Administración</title>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

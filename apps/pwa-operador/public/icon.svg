@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" role="img" aria-label="APR Operador">
+  <rect width="192" height="192" rx="42" fill="#F4F8FC"/>
+  <path d="M96 28c22 27 40 48 40 72a40 40 0 0 1-80 0c0-24 18-45 40-72Z" fill="#0878B9"/>
+  <path d="M96 56c13 17 24 31 24 46a24 24 0 0 1-48 0c0-15 11-29 24-46Z" fill="#0D9488"/>
+  <path d="M80 112c2 10 8 15 17 17" fill="none" stroke="#F4F8FC" stroke-width="8" stroke-linecap="round"/>
+</svg>

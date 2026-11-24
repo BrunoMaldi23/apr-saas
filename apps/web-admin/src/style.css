@@ -1,0 +1,114 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html,
+body,
+#app {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-size: 14px;
+}
+
+@layer components {
+  .card {
+    @apply rounded-md border border-line bg-white shadow-sm;
+  }
+
+  .btn {
+    @apply inline-flex min-h-[40px] items-center justify-center gap-1.5 rounded-md border border-transparent px-3 py-1.5 text-xs font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-55;
+  }
+
+  .btn-primary {
+    @apply btn border-primary bg-primary text-on-primary hover:border-primary-hover hover:bg-primary-hover;
+  }
+
+  .btn-secondary {
+    @apply btn border-line bg-white text-text-primary hover:bg-surface-hover;
+  }
+
+  .btn-danger {
+    @apply btn border-danger bg-transparent text-danger hover:bg-danger-soft;
+  }
+
+  .btn-ghost {
+    @apply btn bg-transparent text-text-secondary hover:bg-surface-hover hover:text-text-primary;
+  }
+
+  .input {
+    @apply w-full rounded-md border border-line bg-white px-3 py-2 text-sm text-text-primary outline-none placeholder:text-text-muted focus:border-primary focus:ring-2 focus:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .label {
+    @apply mb-1.5 block text-xs font-medium text-text-secondary;
+  }
+
+  .tabla {
+    @apply w-full border-collapse text-left text-xs;
+  }
+
+  .tabla thead {
+    @apply sticky top-0 z-10 bg-surface-secondary text-text-secondary;
+  }
+
+  .tabla th {
+    @apply whitespace-nowrap border-b border-line px-3 py-2 font-semibold;
+  }
+
+  .tabla td {
+    @apply whitespace-nowrap border-b border-line px-3 py-2 align-middle;
+  }
+
+  .tabla tbody tr:hover {
+    @apply bg-surface-hover;
+  }
+
+  .chip {
+    @apply inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium;
+  }
+}
+
+.scroll-slim {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.scroll-slim::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scroll-slim::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: var(--radius-pill);
+}
+
+.apr-modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  background: var(--scrim);
+}
+
+.apr-modal-panel {
+  max-height: min(92vh, 900px);
+  width: 100%;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}

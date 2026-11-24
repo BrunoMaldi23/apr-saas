@@ -1,0 +1,64 @@
+# Deploy del MVP en VM Oracle Always Free.
+# No expone puertos al host: Cloudflare Tunnel alcanza el servicio "api" por red interna.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: apr-saas-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: apr_saas
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      TZ: America/Santiago
+      PGTZ: America/Santiago
+    volumes:
+      - apr_pgdata:/var/lib/postgresql/data
+      - ./deploy/generated/01-roles.sql:/docker-entrypoint-initdb.d/01-roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d apr_saas"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      - apr
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: apr-saas-api:mvp
+    container_name: apr-saas-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: "postgresql://apr_admin:${ADMIN_DB_PASSWORD}@postgres:5432/apr_saas?schema=public"
+      APP_DATABASE_URL: "postgresql://apr_app:${APP_DB_PASSWORD}@postgres:5432/apr_saas?schema=public"
+      JWT_SECRET: "${JWT_SECRET}"
+      JWT_EXPIRES_IN: "${JWT_EXPIRES_IN:-8h}"
+      PORT: 3000
+      WEB_ADMIN_URL: "${WEB_ADMIN_URL}"
+      PWA_URL: "${PWA_URL}"
+    expose:
+      - "3000"
+    networks:
+      - apr
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: apr-saas-tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - api
+    networks:
+      - apr
+
+networks:
+  apr:
+    driver: bridge
+
+volumes:
+  apr_pgdata:

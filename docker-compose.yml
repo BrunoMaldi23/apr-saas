@@ -1,0 +1,24 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: apr-saas-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: apr_saas
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Postgres1234!
+      TZ: America/Santiago
+      PGTZ: America/Santiago
+    ports:
+      - "5433:5432"
+    volumes:
+      - apr_pgdata:/var/lib/postgresql/data
+      - ./apps/api/prisma/init/01-roles.sql:/docker-entrypoint-initdb.d/01-roles.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d apr_saas"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+volumes:
+  apr_pgdata:
