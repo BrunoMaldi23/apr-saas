@@ -21,9 +21,10 @@ Oracle VM Always Free (ARM64 recomendado)
 
 Recommended para este stack:
 
-- **Shape:** `VM.Standard.A1.Flex` (Ampere ARM64)
-- **Recursos:** 4 OCPU / 24 GB RAM / 50 GB disco
-- **SO:** Ubuntu 24.04 ARM64
+- **Shape series:** `Ampere` (ARM64)
+- **Shape name:** `VM.Standard.A1.Flex` — aparece como *Always Free-eligible*
+- **Recursos:** 4 OCPU / 24 GB RAM / 50 GB disco (tope ARM gratuito). Si no hay capacidad, bajar a 2 OCPU / 12 GB o probar otra región.
+- **SO:** `Canonical Ubuntu 24.04 Minimal aarch64` (recomendado). En la lista de Oracle elegir una imagen que diga **aarch64**; las que no lo dicen son x86 y no sirven con Ampere. Alternativas: `Ubuntu 22.04 Minimal aarch64` u `Oracle Linux 9 ARM64` (en ese caso cambiar `apt` por `dnf`).
 - **Región:** la que tenga capacidad disponible
 
 No usar el AMD Always Free de 1 GB para este MVP: es insuficiente para Postgres + NestJS sin swap y los builds son muy lentos.
